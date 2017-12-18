@@ -25,11 +25,24 @@ class Aggregator:
 
     def append_seg(self, segment):
         first = segment.xpath('*[1]')
-        time = first[0].find(xmlns+'time')
+        firsttime = first[0].find(xmlns+'time').text
         last = segment.xpath('*[last()]')
-        f2 = [x for x in segment.iterchildren()]
-        print(first)
-        #firsttime = first.iter()
+        lasttime = last[0].find(xmlns+'time').text
+
+        if firsttime > self.maxtime:# whole segment is later than our max time
+            self.seg.extend(segment)
+            self.maxtime = lasttime
+            self.mintime = min(firsttime, self.mintime)
+            return
+
+        if lasttime < self.mintime:# whole segment is earlier than our min time
+            self.seg, segment = segment, self.seg
+            self.seg.extend(segment)
+            self.maxtime = max(lasttime, self.maxtime)
+            self.mintime = firsttime
+            return
+
+        # TODO: segments intersection
 
     def save(self, filename):
         self.track.append(self.seg)
