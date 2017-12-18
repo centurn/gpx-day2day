@@ -1,3 +1,4 @@
+import sys
 from lxml import etree
 from xml.etree import ElementTree
 from lxml.etree import Element
@@ -6,6 +7,7 @@ xmlns = '{http://www.topografix.com/GPX/1/1}'
 
 class Aggregator:
     def __init__(self, base_filename):
+        print('Tnit from ' + base_filename)
         self.data = etree.parse(base_filename)
         tracks = self.data.findall(xmlns+"trk")
         self.gpx = self.data.getroot()
@@ -18,9 +20,11 @@ class Aggregator:
 
         self.mintime = "9999-99-99T00:00:00Z"
         self.maxtime = "0000-00-00T00:00:00Z"
+        self.append_tracks(tracks)
 
+    def append_tracks(self, tracks):
         for track in tracks:
-            for segment in track.findall(xmlns+'trkseg'):
+            for segment in reversed(track.findall(xmlns+'trkseg')):
                 self.append_seg(segment)
 
     def append_seg(self, segment):
@@ -43,8 +47,14 @@ class Aggregator:
             return
 
         # TODO: segments intersection
+        sys.stderr.write("time overlaps!\n")
+
+    def add_file(self, filename):
+        print('Adding ' + filename)
+        data = etree.parse(filename)
+        tracks = data.findall(xmlns+"trk")
+        self.append_tracks(tracks)
 
     def save(self, filename):
         self.track.append(self.seg)
         self.data.write(filename, xml_declaration=True, encoding='utf-8')
-

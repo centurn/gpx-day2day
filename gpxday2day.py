@@ -11,5 +11,7 @@ except Exception:
     sys.exit(1)
 
 data = Aggregator(root + "/Current/Current.gpx")
+for i in reversed(glob.glob(root + "/Archive/*.gpx")):
+    data.add_file(i)
 data.save(dest)
-print(glob.glob(root + "/*.gpx"))
+#print(glob.glob(root + "Archive/*.gpx"))
