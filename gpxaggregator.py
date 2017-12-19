@@ -1,9 +1,17 @@
 import sys
+
+import time
+
+import datetime
+from datetime import datetime
+from datetime import timedelta
 from lxml import etree
 from xml.etree import ElementTree
 from lxml.etree import Element
 
 xmlns = '{http://www.topografix.com/GPX/1/1}'
+TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+STOP_TRESHOLD = timedelta(hours=2)
 
 class Aggregator:
     def __init__(self, base_filename):
@@ -54,6 +62,16 @@ class Aggregator:
         data = etree.parse(filename)
         tracks = data.findall(xmlns+"trk")
         self.append_tracks(tracks)
+
+    def separate_days(self):
+        first = self.seg.xpath('*[1]')
+        firsttime = first[0].find(xmlns+'time').text
+        prevtime = datetime.strptime(firsttime, TIME_FORMAT)
+        for point in self.seg.iterchildren():
+            curtime = datetime.strptime(point.find(xmlns+'time').text, TIME_FORMAT)
+            if curtime - prevtime > STOP_TRESHOLD:
+                print('Stop begin', prevtime)
+            prevtime = curtime
 
     def save(self, filename):
         self.track.append(self.seg)

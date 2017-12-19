@@ -13,5 +13,6 @@ except Exception:
 data = Aggregator(root + "/Current/Current.gpx")
 for i in reversed(glob.glob(root + "/Archive/*.gpx")):
     data.add_file(i)
+data.separate_days()
 data.save(dest)
 #print(glob.glob(root + "Archive/*.gpx"))
