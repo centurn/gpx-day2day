@@ -1,17 +1,13 @@
 import sys
 
-import time
-
-import datetime
 from datetime import datetime
 from datetime import timedelta
 from lxml import etree
-from xml.etree import ElementTree
 from lxml.etree import Element
 
 xmlns = '{http://www.topografix.com/GPX/1/1}'
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-STOP_TRESHOLD = timedelta(hours=2)
+STOP_TRESHOLD = timedelta(hours=4)
 
 class Aggregator:
     def __init__(self, base_filename):
@@ -67,11 +63,26 @@ class Aggregator:
         first = self.seg.xpath('*[1]')
         firsttime = first[0].find(xmlns+'time').text
         prevtime = datetime.strptime(firsttime, TIME_FORMAT)
+        stops_count = 0
         for point in self.seg.iterchildren():
             curtime = datetime.strptime(point.find(xmlns+'time').text, TIME_FORMAT)
             if curtime - prevtime > STOP_TRESHOLD:
+                wpt = Element(xmlns+"wpt")
+                wpt.set('lat', prevp.get('lat'))
+                wpt.set('lon', prevp.get('lon'))
+                name = Element(xmlns+"name")
+                stops_count += 1
+                name.text = 'Ночёвка ' + str(stops_count)
+                wpt.append(name)
+                prev_ele = prevp.find(xmlns+'ele')
+                if prev_ele is not None:
+                    ele = Element(xmlns+'ele')
+                    ele.text = prev_ele.text
+                    wpt.append(ele)
+                self.gpx.append(wpt)
                 print('Stop begin', prevtime)
             prevtime = curtime
+            prevp = point
 
     def save(self, filename):
         self.track.append(self.seg)
