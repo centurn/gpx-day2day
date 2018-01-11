@@ -4,31 +4,22 @@ from datetime import datetime
 from datetime import timedelta
 from lxml import etree
 from lxml.etree import Element
+import os
 
 xmlns = '{http://www.topografix.com/GPX/1/1}'
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 STOP_TRESHOLD = timedelta(hours=4)
 
 class Aggregator:
-    def __init__(self, base_filename):
-        print('Tnit from ' + base_filename)
-        self.data = etree.parse(base_filename)
-        tracks = self.data.findall(xmlns+"trk")
-        self.gpx = self.data.getroot()
-        for track in tracks:
-            self.gpx.remove(track)
-
+    def __init__(self):
         self.track = Element(xmlns+"trk")
-        self.gpx.append(self.track)
         self.seg = Element(xmlns+"trkseg")
-
         self.mintime = "9999-99-99T00:00:00Z"
         self.maxtime = "0000-00-00T00:00:00Z"
-        self.append_tracks(tracks)
 
     def append_tracks(self, tracks):
         for track in tracks:
-            for segment in reversed(track.findall(xmlns+'trkseg')):
+            for segment in track.findall(xmlns+'trkseg'):
                 self.append_seg(segment)
 
     def append_seg(self, segment):
@@ -79,11 +70,15 @@ class Aggregator:
                     ele = Element(xmlns+'ele')
                     ele.text = prev_ele.text
                     wpt.append(ele)
-                self.gpx.append(wpt)
+                #self.gpx.append(wpt)
                 print('Stop begin', prevtime)
             prevtime = curtime
             prevp = point
 
     def save(self, filename):
+        result = etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/template.gpx')
+        gpx = result.getroot()
+        gpx.append(self.track)
         self.track.append(self.seg)
-        self.data.write(filename, xml_declaration=True, encoding='utf-8')
+        result.write(filename, xml_declaration=True, encoding='utf-8')
+        gpx.remove(self.track)
