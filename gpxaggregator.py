@@ -12,7 +12,6 @@ STOP_TRESHOLD = timedelta(hours=4)
 
 class Aggregator:
     def __init__(self):
-        self.track = Element(xmlns+"trk")
         self.seg = Element(xmlns+"trkseg")
         self.mintime = "9999-99-99T00:00:00Z"
         self.maxtime = "0000-00-00T00:00:00Z"
@@ -51,34 +50,41 @@ class Aggregator:
         self.append_tracks(tracks)
 
     def separate_days(self):
-        first = self.seg.xpath('*[1]')
-        firsttime = first[0].find(xmlns+'time').text
+        children = list(self.seg)
+        firsttime = children[0].find(xmlns+'time').text
         prevtime = datetime.strptime(firsttime, TIME_FORMAT)
         stops_count = 0
-        for point in self.seg.iterchildren():
+        day_begin_idx = 0
+        for idx, point in enumerate(children):
             curtime = datetime.strptime(point.find(xmlns+'time').text, TIME_FORMAT)
             if curtime - prevtime > STOP_TRESHOLD:
-                wpt = Element(xmlns+"wpt")
-                wpt.set('lat', prevp.get('lat'))
-                wpt.set('lon', prevp.get('lon'))
-                name = Element(xmlns+"name")
-                stops_count += 1
-                name.text = 'Ночёвка ' + str(stops_count)
-                wpt.append(name)
-                prev_ele = prevp.find(xmlns+'ele')
-                if prev_ele is not None:
-                    ele = Element(xmlns+'ele')
-                    ele.text = prev_ele.text
-                    wpt.append(ele)
-                #self.gpx.append(wpt)
+                #stops_count += 1
+                #self.wpt_from_trkt(prevp, 'Ночёвка ' + str(stops_count))
+
                 print('Stop begin', prevtime)
             prevtime = curtime
             prevp = point
 
-    def save(self, filename):
+    def wpt_from_trkt(self, point, name):
+        wpt = Element(xmlns+"wpt")
+        wpt.set('lat', point.get('lat'))
+        wpt.set('lon', point.get('lon'))
+        name = Element(xmlns+"name")
+        name.text = name
+        wpt.append(name)
+        prev_ele = point.find(xmlns+'ele')
+        if prev_ele is not None:
+            ele = Element(xmlns+'ele')
+            ele.text = prev_ele.text
+            wpt.append(ele)
+        return wpt
+
+    def save(self, points, filename):
         result = etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/template.gpx')
         gpx = result.getroot()
-        gpx.append(self.track)
-        self.track.append(self.seg)
+        track = Element(xmlns+"trk")
+        seg = Element(xmlns+"trkseg")
+        gpx.append(track)
+        track.append(seg)
+        seg.extend(points)
         result.write(filename, xml_declaration=True, encoding='utf-8')
-        gpx.remove(self.track)

@@ -13,10 +13,11 @@ except Exception:
 
 data = Aggregator()
 for i in glob.glob(root + "/Archive/*.gpx"):
+    #if True:
     if not os.path.isfile(i + '.processed'):
         data.add_file(i)
         open(i + '.processed', 'a').close()# touch
 data.add_file(root + "/Current/Current.gpx")
 
 data.separate_days()
-data.save(dest)
+data.save(data.seg, dest)
