@@ -1,5 +1,6 @@
 import glob
 import sys
+import os.path
 
 from gpxaggregator import Aggregator
 
@@ -12,7 +13,9 @@ except Exception:
 
 data = Aggregator()
 for i in glob.glob(root + "/Archive/*.gpx"):
-    data.add_file(i)
+    if not os.path.isfile(i + '.processed'):
+        data.add_file(i)
+        open(i + '.processed', 'a').close()# touch
 data.add_file(root + "/Current/Current.gpx")
 
 data.separate_days()
