@@ -8,7 +8,7 @@ import os
 
 xmlns = '{http://www.topografix.com/GPX/1/1}'
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-STOP_TRESHOLD = timedelta(hours=4)
+STOP_TRESHOLD = timedelta(hours=2)
 
 class Aggregator:
     def __init__(self):
@@ -49,21 +49,27 @@ class Aggregator:
         tracks = data.findall(xmlns+"trk")
         self.append_tracks(tracks)
 
-    def separate_days(self):
-        children = list(self.seg)
-        firsttime = children[0].find(xmlns+'time').text
-        prevtime = datetime.strptime(firsttime, TIME_FORMAT)
+    def separate_days(self, tgt_dir):
+        points = list(self.seg)
+        prevtime_str = points[0].find(xmlns+'time').text
+        prevtime = datetime.strptime(prevtime_str, TIME_FORMAT)
         stops_count = 0
         day_begin_idx = 0
-        for idx, point in enumerate(children):
-            curtime = datetime.strptime(point.find(xmlns+'time').text, TIME_FORMAT)
+        for idx, point in enumerate(points):
+            curtime_str = point.find(xmlns+'time').text
+            curtime = datetime.strptime(curtime_str, TIME_FORMAT)
             if curtime - prevtime > STOP_TRESHOLD:
                 #stops_count += 1
                 #self.wpt_from_trkt(prevp, 'Ночёвка ' + str(stops_count))
+                tgt_file = tgt_dir + '/' + prevtime_str + '.gpx'
+                self.save(points[day_begin_idx:idx], tgt_file)
 
-                print('Stop begin', prevtime)
+                day_begin_idx = idx
             prevtime = curtime
-            prevp = point
+            prevtime_str = curtime_str
+        tgt_file = tgt_dir + '/' + prevtime_str + '.gpx'
+        self.save(points[day_begin_idx:], tgt_file)
+
 
     def wpt_from_trkt(self, point, name):
         wpt = Element(xmlns+"wpt")
@@ -80,6 +86,7 @@ class Aggregator:
         return wpt
 
     def save(self, points, filename):
+        print('Saving ', filename)
         result = etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/template.gpx')
         gpx = result.getroot()
         track = Element(xmlns+"trk")
