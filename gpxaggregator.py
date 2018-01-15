@@ -86,7 +86,8 @@ class Aggregator:
         return wpt
 
     def save(self, points, filename):
-        print('Saving ', filename)
+        print('Saving ', filename, ' (exists!)' if os.path.isfile(filename) else '')
+
         result = etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/template.gpx')
         gpx = result.getroot()
         track = Element(xmlns+"trk")
