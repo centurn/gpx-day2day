@@ -8,7 +8,7 @@ import os
 
 xmlns = '{http://www.topografix.com/GPX/1/1}'
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-STOP_TRESHOLD = timedelta(hours=2)
+STOP_TRESHOLD = timedelta(hours=5)
 
 class Aggregator:
     def __init__(self):
@@ -63,10 +63,9 @@ class Aggregator:
                 #self.wpt_from_trkt(prevp, 'Ночёвка ' + str(stops_count))
                 tgt_file = tgt_dir + '/' + prevtime_str + '.gpx'
                 self.save(points[day_begin_idx:idx], tgt_file)
-
                 day_begin_idx = idx
+                prevtime_str = curtime_str
             prevtime = curtime
-            prevtime_str = curtime_str
         tgt_file = tgt_dir + '/' + prevtime_str + '.gpx'
         self.save(points[day_begin_idx:], tgt_file)
 

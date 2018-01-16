@@ -14,12 +14,14 @@ except Exception:
     sys.exit(1)
 
 data = Aggregator()
-for i in glob.glob(root + "/Archive/*.gpx"):
+for i in sorted(glob.glob(root + "/Archive/*.gpx")):
     #if True:
     if not os.path.isfile(i + '.processed'):
         data.add_file(i)
         open(i + '.processed', 'a').close()# touch
-data.add_file(root + "/Current/Current.gpx")
+i = root + "/Current/Current.gpx"
+if os.path.isfile(i):
+    data.add_file(i)
 
+#data.save(data.seg, dest + '/test.gpx')
 data.separate_days(dest)
-#data.save(data.seg, dest)
